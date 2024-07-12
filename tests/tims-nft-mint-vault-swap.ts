@@ -1,9 +1,11 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
+import type NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet';
+import { ASSOCIATED_PROGRAM_ID } from '@coral-xyz/anchor/dist/cjs/utils/token';
+import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync, getAccount, } from '@solana/spl-token';
 import { TimsNftMintVaultSwap } from "../target/types/tims_nft_mint_vault_swap";
-import { Metaplex } from "@metaplex-foundation/js";
-import * as spl from "@solana/spl-token";
-import { assert } from "chai";
+import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
+
 
 describe("tims-nft-mint-vault-swap", () => {
   // Configure the client to use the local cluster.
@@ -12,80 +14,228 @@ describe("tims-nft-mint-vault-swap", () => {
 
   const program = anchor.workspace.TimsNftMintVaultSwap as Program<TimsNftMintVaultSwap>;
 
-  const wallet = provider.wallet as anchor.Wallet;
-  const connection = provider.connection;
+  const wallet = provider.wallet as NodeWallet;
 
-  const metaplex = Metaplex.make(connection);
+  const TOKEN_METADATA_PROGRAM_ID = new anchor.web3.PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
+
+  const mintAuthority = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from('authority')], program.programId)[0];
 
 
-   // Constants from our program
-   const MINT_SEED = "Collection";
+  const collectionKeypair = Keypair.generate();
+  const collectionMint = collectionKeypair.publicKey;
+
+  const mintKeypair = Keypair.generate();
+  const mint = mintKeypair.publicKey;
+
+
+  const getMetadata = async (mint: anchor.web3.PublicKey): Promise<anchor.web3.PublicKey> => {
+    return anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from('metadata'), TOKEN_METADATA_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+      TOKEN_METADATA_PROGRAM_ID,
+    )[0];
+  };
+
+  const getMasterEdition = async (mint: anchor.web3.PublicKey): Promise<anchor.web3.PublicKey> => {
+    return anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from('metadata'), TOKEN_METADATA_PROGRAM_ID.toBuffer(), mint.toBuffer(), Buffer.from('edition')],
+      TOKEN_METADATA_PROGRAM_ID,
+    )[0];
+  };
+
+  const [vaultOwner] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("vault_owner")],
+    program.programId
+  );
+
+  const [vaultAccount] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("vault")],
+    program.programId
+  );
 
   const testMetadata = {
     uri: "https://arweave.net/h19GMcMz7RLDY7kAHGWeWolHTmO83mLLMNPzEkF32BQ",
     name: "NAME",
     symbol: "SYMBOL",
+    decimal: 0
   };
 
-  const [collectionPDA] = anchor.web3.PublicKey.findProgramAddressSync(
-    [Buffer.from(MINT_SEED)],
-    program.programId
-  );
+  const mintAmount = 1;
 
-  it("create collection nft", async () => {
-    
-    const collectionMetadataPDA =  metaplex
-    .nfts()
-    .pdas()
-    .metadata({ mint: collectionPDA });
+  it('Create Collection NFT', async () => {
+    console.log('\nCollection Mint Key: ', collectionMint.toBase58());
 
-  const collectionMasterEditionPDA =  metaplex
-    .nfts()
-    .pdas()
-    .masterEdition({ mint: collectionPDA });
+    const metadata = await getMetadata(collectionMint);
+    console.log('Collection Metadata Account: ', metadata.toBase58());
 
-    const collectionTokenAccount = await spl.getAssociatedTokenAddress(
-      collectionPDA,
-      wallet.publicKey
-    );
+    const masterEdition = await getMasterEdition(collectionMint);
+    console.log('Master Edition Account: ', masterEdition.toBase58());
 
-    const modifyComputeUnits =
-    anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({
-      units: 300_000,
-    });
+    const destination = getAssociatedTokenAddressSync(collectionMint, wallet.publicKey);
+    console.log('Destination ATA = ', destination.toBase58());
+
 
     const tx = await program.methods
-    .createCollectionNft(
-      testMetadata.uri,
-      testMetadata.name,
-      testMetadata.symbol
-    )
-    .accounts({
-      authority: wallet.publicKey,
-      collectionMint: collectionPDA,
-      metadataAccount: collectionMetadataPDA,
-      masterEdition: collectionMasterEditionPDA,
-      tokenAccount: collectionTokenAccount,
-    })
-    .transaction();
-
-    const transferTransaction = new anchor.web3.Transaction().add(
-      modifyComputeUnits,
-      tx
-    );
-
-    const txSig = await anchor.web3.sendAndConfirmTransaction(
-      connection,
-      transferTransaction,
-      [wallet.payer],
-      { skipPreflight: true }
-    );
-
-     const accInfo = await connection.getAccountInfo(collectionMetadataPDA);
-     assert(accInfo, "  Mint should be initialized.")
-
+      .createCollection(
+        testMetadata.uri,
+        testMetadata.name,
+        testMetadata.symbol,
+        testMetadata.decimal
+      )
+      .accountsPartial({
+        user: wallet.publicKey,
+        mint: collectionMint,
+        mintAuthority,
+        metadata,
+        masterEdition,
+        destination,
+        systemProgram: SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+      })
+      .signers([collectionKeypair])
+      .rpc({
+        skipPreflight: true,
+      });
+    console.log('\nCollection NFT minted: TxID - ', tx);
   });
 
+  it('Mint NFT', async () => {
+    console.log('\nMint', mint.toBase58());
+
+    const metadata = await getMetadata(mint);
+    console.log('Metadata', metadata.toBase58());
+
+    const masterEdition = await getMasterEdition(mint);
+    console.log('Master Edition', masterEdition.toBase58());
+
+    const destination = getAssociatedTokenAddressSync(mint, wallet.publicKey);
+    console.log('Destination', destination.toBase58());
+
+    const tx = await program.methods
+      .mintNft(
+        testMetadata.uri,
+        testMetadata.name,
+        testMetadata.symbol,
+        testMetadata.decimal,
+        new anchor.BN(mintAmount)
+      )
+      .accountsPartial({
+        owner: wallet.publicKey,
+        destination,
+        metadata,
+        masterEdition,
+        mint,
+        mintAuthority,
+        collectionMint,
+        systemProgram: SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
+        tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+      })
+      .signers([mintKeypair])
+      .rpc({
+        skipPreflight: true,
+      });
+    console.log('\nNFT Minted! Your transaction signature', tx);
+  });
+
+  it('Verify Collection', async () => {
+    const mintMetadata = await getMetadata(mint);
+    console.log('\nMint Metadata', mintMetadata.toBase58());
+
+    const collectionMetadata = await getMetadata(collectionMint);
+    console.log('Collection Metadata', collectionMetadata.toBase58());
+
+    const collectionMasterEdition = await getMasterEdition(collectionMint);
+    console.log('Collection Master Edition', collectionMasterEdition.toBase58());
+
+    const tx = await program.methods
+      .verifyCollection()
+      .accountsPartial({
+        authority: wallet.publicKey,
+        metadata: mintMetadata,
+        mint,
+        mintAuthority,
+        collectionMint,
+        collectionMetadata,
+        collectionMasterEdition,
+        systemProgram: SystemProgram.programId,
+        sysvarInstruction: anchor.web3.SYSVAR_INSTRUCTIONS_PUBKEY,
+        tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+      })
+      .rpc({
+        skipPreflight: true,
+      });
+    console.log('\nCollection Verified! Your transaction signature', tx);
+  });
  
+
+  it('Locks an nft in a vault', async () => {
+    console.log('\nMint', mint.toBase58());
+
+    const nftMintATA = getAssociatedTokenAddressSync(mint, wallet.publicKey);
+    console.log('Nft mint ATA', nftMintATA.toBase58());
+
+
+    const tx = await program.methods.lockNft(new anchor.BN(mintAmount)).accountsPartial({
+    user: wallet.publicKey,
+    vaultOwner: vaultOwner,
+    vaultAccount: vaultAccount,
+    senderNftAccount: nftMintATA,
+    mintOfNftBeingSent: mint,
+    systemProgram: SystemProgram.programId,
+    tokenProgram: TOKEN_PROGRAM_ID,
+    })
+    .rpc({
+      skipPreflight: true,
+    });
+  console.log('\nNFT locked! Your transaction signature', tx);
+  const tokenAccountInfo = await getAccount(program.provider.connection, vaultAccount);
+  console.log(
+    "Vault token amount after: " + tokenAccountInfo.amount 
+  );
+  })
+
+  it('Withdraws an nft from a vault', async () => {
+    console.log('\nMint', mint.toBase58());
+
+    const nftMintATA = getAssociatedTokenAddressSync(mint, wallet.publicKey);
+    console.log('Nft mint ATA', nftMintATA.toBase58());
+    const nativeSolAddress = new anchor.web3.PublicKey('So11111111111111111111111111111111111111112');
+
+    const tx = await program.methods.withdrawNft().accountsPartial({
+    user: wallet.publicKey,
+    vaultOwner: vaultOwner,
+    vaultAccount: vaultAccount,
+    rentReceiver: nativeSolAddress,
+    senderNftAccount: nftMintATA,
+    mintOfNftBeingSent: mint,
+    systemProgram: SystemProgram.programId,
+    tokenProgram: TOKEN_PROGRAM_ID,
+    })
+    .rpc({
+      skipPreflight: true,
+    });
+  console.log('\nNFT locked! Your transaction signature', tx);
+  const tokenAccountInfo = await getAccount(program.provider.connection, vaultAccount);
+  console.log(
+    "Vault token amount after: " + tokenAccountInfo.amount 
+  );
+
+
+  // let tx = await program.methods.unlockNft().accountsPartial({
+  //   user: wallet.publicKey,
+  //   vaultOwner: vaultOwner,
+  //   vaultAccount: vaultAccount,
+  //   receiver: nativeSolAddress,
+  //   systemProgram: SystemProgram.programId,
+  //   tokenProgram: TOKEN_PROGRAM_ID,
+  //   })
+  //   .rpc({
+  //     skipPreflight: true,
+  //   });
+  //   console.log('\nAccounts closed succesfully! Your transaction signature', tx);
+  })
 
 });
