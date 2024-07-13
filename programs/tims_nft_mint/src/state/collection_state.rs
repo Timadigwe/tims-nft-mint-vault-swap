@@ -50,3 +50,23 @@ pub struct CreateCollectionParams {
     /// no. of items collection should hold
     pub items: u32,
 }
+
+
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct MintFromColParams {
+    ///  name of our asset
+    pub name: String,
+
+    ///  off-chain metadata uri
+    pub uri: String,
+}
+
+
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct LockInVaultParams {
+    ///  name of our asset
+    pub name: String,
+
+    ///  off-chain metadata uri
+    pub uri: String,
+}

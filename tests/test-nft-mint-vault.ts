@@ -32,12 +32,32 @@ describe("tims-nft-mint-vault", () => {
 	const program = anchor.workspace.TimsNftMint as Program<TimsNftMint>;
 
 
-	it("Creates Collection and initializes protocol config and accounts", async () => {
+	it(" Initializes protocol state", async () => {
+		const txHash = await program.methods
+			.init()
+			.accountsStrict({
+				payer: provider.publicKey,
+				assetManager: findAssetManagerAddress(),
+				protocol: findProtocolAddress(),
+				treasury: provider.publicKey,
+				coreProgram: CORE_PROGRAM_ID,
+				systemProgram: SystemProgram.programId,
+			})
+			.rpc();
+
+		console.log(
+			`tx: https://explorer.solana.com/tx/${txHash}?cluster=devnet\n`
+		);
+	});
+
+
+	it("Creates Collection", async () => {
 		
 		console.log("-- uploading assets")
 		let name = "TimBoredApe";
 		let description = "Friends of Tim BoredApe Collections";
-		let uri = await uploadAssetFiles(umi, name, description);
+		let imageUrl = "https://www.freepik.com/free-photos-vectors/nft"
+		let uri = await uploadAssetFiles(umi, name, description, imageUrl);
 
 		const createCollectionParams = {
 			name,
@@ -51,11 +71,8 @@ describe("tims-nft-mint-vault", () => {
 			.createCollection(createCollectionParams)
 			.accountsStrict({
 				payer: provider.publicKey,
-				assetManager: findAssetManagerAddress(),
-				protocol: findProtocolAddress(),
 				collection: collection.publicKey,
 				collectionData: findCollectionDataAddress(collection.publicKey),
-				treasury: provider.publicKey,
 				coreProgram: CORE_PROGRAM_ID,
 				systemProgram: SystemProgram.programId,
 			})
@@ -72,7 +89,8 @@ describe("tims-nft-mint-vault", () => {
 		const rand = Math.floor(Math.random() * 10);
 		const name = `TimBoredApe #${rand}`;
 		const description = `Asset No. ${rand}`;
-		let uri = await uploadAssetFiles(umi, name, description);
+		let imageUrl = "https://www.freepik.com/free-photos-vectors/nft"
+		let uri = await uploadAssetFiles(umi, name, description, imageUrl);
 		const params = {
 			name,
 			uri,

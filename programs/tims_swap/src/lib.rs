@@ -14,8 +14,8 @@ pub mod tims_swap {
     use super::*;
 
     /// Swap Tokens for NFTs
-    pub fn swap(ctx: Context<Swap>) -> Result<()> {
-        Swap::swap(ctx)
+    pub fn swap(ctx: Context<SwapContext>) -> Result<()> {
+        SwapContext::swap(ctx)
     }
 
 }

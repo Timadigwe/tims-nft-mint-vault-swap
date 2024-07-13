@@ -62,22 +62,30 @@ export const findCollectionDataAddress = (collection: PublicKey): PublicKey => {
 };
 
 // ------------------------------- helpers
-export function uint8FileData(pathName: string): Uint8Array {
-	const filePath = path.join(__dirname, pathName);
+// export function uint8FileData(pathName: string): Uint8Array {
+// 	const filePath = path.join(__dirname, pathName);
 
-	const data = fs.readFileSync(filePath);
-	return data;
-}
+// 	const data = fs.readFileSync(filePath);
+// 	return data;
+// }
 
 
 export async function uploadAssetFiles(
 	umi: Umi,
 	name: string,
-	description: string
+	description: string,
+	imageUrl: string,
 ) {
-	let fileData = uint8FileData("../onboarding.jpg");
+	console.log("-- fetching image from URL");
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+        throw new Error(`Failed to fetch image from URL: ${response.statusText}`);
+    }
+
+	const arrayBuffer = await response.arrayBuffer();
+	const fileData = Buffer.from(arrayBuffer);
 	console.log("-- creating file")
-	let file = createGenericFile(fileData, "../onboarding.jpg", {
+	let file = createGenericFile(fileData, "nftImage.jpg", {
 		contentType: "image/jpeg",
 	});
 	console.log("-- file created")

@@ -7,28 +7,20 @@ use mpl_core::instructions::TransferV1CpiBuilder;
 
 use crate::{error::CreateErrorCode, state::{AssetManager, Protocol}, Core};
 
-#[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct LockInVaultParams {
-    ///  name of our asset
-    pub name: String,
-
-    ///  off-chain metadata uri
-    pub uri: String,
-}
 
 /// Create MPL Core Asset context
 ///
 /// Expects the following accounts:
-/// 1. `[writeable, signer]` payer
-/// 2. `[writeable]` asset
-/// 3. `[writeable]` collection
-/// 4. `[writeable]` asset manager
-/// 5. `[writeable]` protocol
+/// 1. `[writable, signer]` payer
+/// 2. `[writable]` asset
+/// 3. `[writable]` collection
+/// 4. `[writable]` asset manager
+/// 5. `[writable]` protocol
 /// 6. `[]` core program
 /// 7. `[]` `system program`
 ///
 #[derive(Accounts)]
-pub struct LockAssetInVault<'info> {
+pub struct LockAssetInVaultContext<'info> {
     pub payer: Signer<'info>,
 
     #[account(mut, address = protocol.treasury @CreateErrorCode::PubkeyMismatch)]
@@ -52,7 +44,7 @@ pub struct LockAssetInVault<'info> {
     pub system_program: Program<'info, System>,
 }
 
-impl LockAssetInVault<'_> {
+impl LockAssetInVaultContext<'_> {
     /// validation helper for our IX
     pub fn validate(&self) -> Result<()> {
         // when locking asset with program, user must pay rental fee of one sol
@@ -68,7 +60,7 @@ impl LockAssetInVault<'_> {
     /// lock asset in vault
     ///
     #[access_control(ctx.accounts.validate())]
-    pub fn lock_asset_in_vault(ctx: Context<LockAssetInVault>) -> Result<()> {
+    pub fn lock_asset_in_vault(ctx: Context<LockAssetInVaultContext>) -> Result<()> {
         let protocol = &mut ctx.accounts.protocol;
 
         // take fee of one sol for locking asset

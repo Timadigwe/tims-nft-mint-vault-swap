@@ -1,24 +1,16 @@
 use anchor_lang::prelude::*;
 use mpl_core::instructions::CreateV1CpiBuilder;
 
-use crate::{error::CreateErrorCode, state::CollectionData, Core};
+use crate::{error::CreateErrorCode, state::CollectionData, Core, MintFromColParams};
 
-#[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct MintFromColParams {
-    ///  name of our asset
-    pub name: String,
-
-    ///  off-chain metadata uri
-    pub uri: String,
-}
 
 /// Create MPL Core Asset context
 ///
 /// Expects the following accounts:
-/// 1. `[writeable, signer]` payer
-/// 2. `[writeable, signer]` asset
-/// 3. `[writeable]` collection
-/// 4. `[writeable]` collection_data
+/// 1. `[writable, signer]` payer
+/// 2. `[writable, signer]` asset
+/// 3. `[writable]` collection
+/// 4. `[writable]` collection_data
 /// 5. `[]` core program
 /// 6. `[]` `system program`
 ///
@@ -28,7 +20,7 @@ pub struct MintFromColParams {
 ///
 #[derive(Accounts)]
 #[instruction(params: MintFromColParams)]
-pub struct MintFromCollection<'info> {
+pub struct MintFromCollectionContext<'info> {
     pub payer: Signer<'info>,
 
     /// CHECK: we are passing this in ourselves
@@ -51,7 +43,7 @@ pub struct MintFromCollection<'info> {
     pub system_program: Program<'info, System>,
 }
 
-impl MintFromCollection<'_> {
+impl MintFromCollectionContext<'_> {
     /// validation helper for our IX
     pub fn validate(&self) -> Result<()> {
         // collection contains items to be minted from
@@ -66,7 +58,7 @@ impl MintFromCollection<'_> {
     ///
     #[access_control(ctx.accounts.validate())]
     pub fn mint_from_collection(
-        ctx: Context<MintFromCollection>,
+        ctx: Context<MintFromCollectionContext>,
         params: MintFromColParams,
     ) -> Result<()> {
         let collection_data = &mut ctx.accounts.collection_data;

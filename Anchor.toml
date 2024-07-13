@@ -6,7 +6,6 @@ skip-lint = false
 
 [programs.localnet]
 tims_nft_mint = "7B7qYnQAV8SfuxsnkXeWm63H8vYwuKxmWX55avBARUCL"
-tims_nft_mint_vault_swap = "AcCtXFHvc1to5wHeFX2EPj4XE3tDb5Cvcd5YARAcU6eM"
 tims_swap = "7svwjVA2mXBsCDL6SSdYonvswsEnx4y3uZGVtjqyeQzq"
 
 [registry]

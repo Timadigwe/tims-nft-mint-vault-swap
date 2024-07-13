@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 use tims_nft_mint::{
-    cpi::{accounts::Purchase, purchase},
+    cpi::{accounts::PurchaseContext, purchase},
     program::TimsNftMint,
     AssetManager, Core, Protocol,
 };
@@ -10,11 +10,11 @@ use tims_nft_mint::{
 ///
 ///  ### Accounts:
 ///
-/// 1. `[writeable, signer]` payer
-/// 2. `[writeable]` buyer
-/// 3. `[writeable]` previous_owner
-/// 4. `[writeable]` asset
-/// 5. `[writeable]` collection
+/// 1. `[writable, signer]` payer
+/// 2. `[writable]` buyer
+/// 3. `[writable]` previous_owner
+/// 4. `[writable]` asset
+/// 5. `[writable]` collection
 /// 6. `[]` asset manager
 /// 7. `[]` protocol
 /// 8. `[]` core program
@@ -23,7 +23,7 @@ use tims_nft_mint::{
 ///
 
 #[derive(Accounts)]
-pub struct Swap<'info> {
+pub struct SwapContext<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
@@ -52,7 +52,7 @@ pub struct Swap<'info> {
     pub system_program: Program<'info, System>,
 }
 
-impl Swap<'_> {
+impl SwapContext<'_> {
     /// validation helper for our IX
     pub fn validate(&self) -> Result<()> {
         Ok(())
@@ -61,10 +61,10 @@ impl Swap<'_> {
     /// swap nft for sol
     ///
     #[access_control(ctx.accounts.validate())]
-    pub fn swap(ctx: Context<Swap>) -> Result<()> {
+    pub fn swap(ctx: Context<SwapContext>) -> Result<()> {
         let cpi_program = ctx.accounts.mint_vault_program.to_account_info();
 
-        let purchase_cpi_accounts = Purchase {
+        let purchase_cpi_accounts = PurchaseContext {
             payer: ctx.accounts.payer.to_account_info(),
             buyer: ctx.accounts.buyer.to_account_info(),
             previous_owner: ctx.accounts.previous_owner.to_account_info(),

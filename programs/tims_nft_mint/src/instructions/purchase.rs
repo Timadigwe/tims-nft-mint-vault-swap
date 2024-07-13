@@ -13,11 +13,11 @@ use crate::{
 ///
 ///  ### Accounts:
 ///
-/// 1. `[writeable, signer]` payer
-/// 2. `[writeable]` buyer
-/// 3. `[writeable]` previous_owner
-/// 4. `[writeable]` asset
-/// 5. `[writeable]` collection
+/// 1. `[writable, signer]` payer
+/// 2. `[writable]` buyer
+/// 3. `[writable]` previous_owner
+/// 4. `[writable]` asset
+/// 5. `[writable]` collection
 /// 6. `[]` asset manager
 /// 7. `[]` protocol
 /// 8. `[]` core program
@@ -25,7 +25,7 @@ use crate::{
 ///
 
 #[derive(Accounts)]
-pub struct Purchase<'info> {
+pub struct PurchaseContext<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
@@ -52,7 +52,7 @@ pub struct Purchase<'info> {
     pub system_program: Program<'info, System>,
 }
 
-impl Purchase<'_> {
+impl PurchaseContext<'_> {
     /// validation helper for our IX
     pub fn validate(&self) -> Result<()> {
         //  using a constant rate of 2 SOL to buy/swap any asset in our vaults
@@ -68,7 +68,7 @@ impl Purchase<'_> {
     /// buy a MPL core asset listed on the marketplace
     ///
     #[access_control(ctx.accounts.validate())]
-    pub fn purchase_asset(ctx: Context<Purchase>) -> Result<()> {
+    pub fn purchase_asset(ctx: Context<PurchaseContext>) -> Result<()> {
         let asset_manager = &mut ctx.accounts.asset_manager;
         let purchase_fee = 2 * LAMPORTS_PER_SOL;
 

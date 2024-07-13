@@ -24,14 +24,12 @@ impl anchor_lang::Id for Core {
 pub mod tims_nft_mint {
     use super::*;
 
-    // /// Init protocol config and accounts
-    // ///
-    // pub fn init(ctx: Context<Init>) -> Result<()> {
-    //     Init::init(ctx)
-    // }
+    /// Init protocol config and accounts
+    pub fn init(ctx: Context<InitContext>) -> Result<()> {
+        InitContext::init(ctx)
+    }
 
      /// Create a MPL Core collection 
-    ///
     pub fn create_collection(
         ctx: Context<CreateCollectionContext>,
         params: CreateCollectionParams,
@@ -40,18 +38,17 @@ pub mod tims_nft_mint {
     }
 
      /// Create a MPL Core asset from a collection
-    ///
-    pub fn mint_asset(ctx: Context<MintFromCollection>, params: MintFromColParams) -> Result<()> {
-        MintFromCollection::mint_from_collection(ctx, params)
+    pub fn mint_asset(ctx: Context<MintFromCollectionContext>, params: MintFromColParams) -> Result<()> {
+        MintFromCollectionContext::mint_from_collection(ctx, params)
     }
 
-     // lock asset in vault
-     pub fn lock_in_vault(ctx: Context<LockAssetInVault>) -> Result<()> {
-        LockAssetInVault::lock_asset_in_vault(ctx)
+     /// Lock asset in vault
+     pub fn lock_in_vault(ctx: Context<LockAssetInVaultContext>) -> Result<()> {
+        LockAssetInVaultContext::lock_asset_in_vault(ctx)
     }
-
-    pub fn purchase(ctx: Context<Purchase>) -> Result<()> {
-        Purchase::purchase_asset(ctx)
+    /// Purchase an asset 
+    pub fn purchase(ctx: Context<PurchaseContext>) -> Result<()> {
+        PurchaseContext::purchase_asset(ctx)
     }
 
 }
