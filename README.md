@@ -47,9 +47,9 @@ anchor build
 ## Instructions and Contexts
 
 
-1. Tims_Nft_Mint program
+1. **Tims_Nft_Mint program**
 
--   `init` - **only call this if you deploy a new program**. Starts the program by setting up its communication rules (protocol state) and accounts for managing digital resources (asset manager accounts).
+-   **`init` - **only call this if you deploy a new program**. Starts the program by setting up its communication rules (protocol state) and accounts for managing digital resources (asset manager accounts).**
 
 **Accounts:**
 
@@ -61,7 +61,7 @@ anchor build
 6. [] system program
 
 
--   `create_collection` - creates a collection for the assets that will be minted
+-   **`create_collection` - creates a collection for the assets that will be minted**
 
 **Accounts:**
 
@@ -74,7 +74,7 @@ anchor build
 **Parameters**:
 -params: [CreateCollectionParams]
 
--   `mint_asset` - mints asset from previously created collection
+-   **`mint_asset` - mints asset from previously created collection**
 
 **Accounts:**
 
@@ -88,7 +88,7 @@ anchor build
 **Parameters**:
 -params: [MintFromColParams]
 
--   `lock_in_vault` - locks an asset in the program vault. Protocol takes a flat fee of 1 SOl for locking the asset
+-   **`lock_in_vault` - locks an asset in the program vault. Protocol takes a flat fee of 1 SOl for locking the asset**
 
 **Accounts:**
 
@@ -100,7 +100,7 @@ anchor build
 6. [] core program
 7. [] system program
 
--   `purchase` - Unlock and acquire an asset from a program vault for a one-time fee of 2 SOL.
+-   **`purchase` - Unlock and acquire an asset from a program vault for a one-time fee of 2 SOL.**
 
 **Accounts:**
 
@@ -115,9 +115,9 @@ anchor build
 9. [] system program
 
 
-2. Tims_Swap program
+2. **Tims_Swap program**
 
--   swap. The user initiates a swap by transferring their CPI tokens into the mint-vault program. This program then calls the purchase IX function to exchange a locked asset within the vault for SOL.
+-   **swap. The user initiates a swap by transferring their CPI tokens into the mint-vault program. This program then calls the purchase IX function to exchange a locked asset within the vault for SOL.**
 
 **Accounts:**
 
