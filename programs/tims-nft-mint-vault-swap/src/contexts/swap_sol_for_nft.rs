@@ -1,16 +1,15 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, solana_program::system_instruction};
 use anchor_spl::{
     associated_token::AssociatedToken, 
     metadata::Metadata, 
     token::{
-        mint_to, 
+        mint_to,
         Mint, 
         MintTo, 
         Token, 
-        TokenAccount,
+        TokenAccount
     }
 };
-
 use anchor_spl::metadata::mpl_token_metadata::{
     instructions::{
         CreateMasterEditionV3Cpi, 
@@ -18,69 +17,96 @@ use anchor_spl::metadata::mpl_token_metadata::{
         CreateMasterEditionV3InstructionArgs, 
         CreateMetadataAccountV3Cpi, 
         CreateMetadataAccountV3CpiAccounts, 
-        CreateMetadataAccountV3InstructionArgs
+        CreateMetadataAccountV3InstructionArgs,
     }, 
     types::{
-        CollectionDetails, 
+        Collection, 
         Creator, 
-        DataV2
+        DataV2,
     }
 };
-
-use crate::{constants::AUTHORITY_SEED, state::CreateNFTParams};
-
-
+use crate::{constants::{AUTHORITY_SEED, SOL_SWAP_AMOUNT}, errors::GeneralError, state::CreateNFTParams};
 
 #[derive(Accounts)]
 #[instruction(params: CreateNFTParams)]
-pub struct CreateCollection<'info> {
+pub struct SwapSolForNft<'info> {
     #[account(mut)]
-    user: Signer<'info>,
+    pub owner: Signer<'info>,
     #[account(
         init,
-        payer = user,
+        payer = owner,
         mint::decimals = params.decimals,
         mint::authority = mint_authority,
         mint::freeze_authority = mint_authority,
     )]
-    mint: Account<'info, Mint>,
+    pub mint: Account<'info, Mint>,
+    #[account(
+        init,
+        payer = owner,
+        associated_token::mint = mint,
+        associated_token::authority = owner
+    )]
+    pub destination: Account<'info, TokenAccount>,
+
+    /// CHECK: We aren't writing to it 
+    #[account(mut)]
+    pub sol_recipient: AccountInfo<'info>,
+    #[account(mut)]
+    /// CHECK: This account will be initialized by the metaplex program
+    pub metadata: UncheckedAccount<'info>,
+    #[account(mut)]
+    /// CHECK: This account will be initialized by the metaplex program
+    pub master_edition: UncheckedAccount<'info>,
     #[account(
         seeds = [AUTHORITY_SEED],
         bump,
     )]
-    /// CHECK: This account is not initialized and is being used for signing purposes only
+    /// CHECK: This is account is not initialized and is being used for signing purposes only
     pub mint_authority: UncheckedAccount<'info>,
     #[account(mut)]
-    /// CHECK: This account will be initialized by the metaplex program
-    metadata: UncheckedAccount<'info>,
-    #[account(mut)]
-    /// CHECK: This account will be initialized by the metaplex program
-    master_edition: UncheckedAccount<'info>,
-    #[account(
-        init,
-        payer = user,
-        associated_token::mint = mint,
-        associated_token::authority = user
-    )]
-    destination: Account<'info, TokenAccount>,
-    system_program: Program<'info, System>,
-    token_program: Program<'info, Token>,
-    associated_token_program: Program<'info, AssociatedToken>,
-    token_metadata_program: Program<'info, Metadata>,
+    pub collection_mint: Account<'info, Mint>,
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub token_metadata_program: Program<'info, Metadata>,
 }
 
 
-impl<'info> CreateCollection<'info> {
-    pub fn create_collection(&mut self, bumps: &CreateCollectionBumps, 
+impl<'info> SwapSolForNft<'info> {
+    pub fn swap_sol_for_nft(&mut self, bumps: &SwapSolForNftBumps,
         uri: String,
         name: String,
-        symbol: String,) -> Result<()> {
+        symbol: String,
+        quantity: u64) -> Result<()> {
+            // if the users sol balance is greater than the swap amount we go on and transfer sol
+            let user_balance: u64 = self.owner.to_account_info().lamports();
+            require_gt!(user_balance, SOL_SWAP_AMOUNT, GeneralError::InvalidFee);
 
+            let sender_account = &self.owner.to_account_info();
+            let recipient_account = &self.sol_recipient.to_account_info();
+
+             // Create the transfer instruction
+        let transfer_instruction =
+        system_instruction::transfer(sender_account.key, recipient_account.key, SOL_SWAP_AMOUNT);
+
+
+            // Invoke the transfer instruction
+        anchor_lang::solana_program::program::invoke_signed(
+            &transfer_instruction,
+            &[
+                        sender_account.to_account_info(),
+                        recipient_account.clone(),
+                        self.system_program.to_account_info(),
+                        ],
+                   &[],
+                )?;
+
+          // then mint the nft to the user
         let metadata = &self.metadata.to_account_info();
         let master_edition = &self.master_edition.to_account_info();
         let mint = &self.mint.to_account_info();
         let authority = &self.mint_authority.to_account_info();
-        let payer = &self.user.to_account_info();
+        let payer = &self.owner.to_account_info();
         let system_program = &self.system_program.to_account_info();
         let spl_token_program = &self.token_program.to_account_info();
         let spl_metadata_program = &self.token_metadata_program.to_account_info();
@@ -98,19 +124,19 @@ impl<'info> CreateCollection<'info> {
             authority: self.mint_authority.to_account_info(),
         };
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
-        mint_to(cpi_ctx, 1)?;
+        mint_to(cpi_ctx, quantity)?;
         msg!("Collection NFT minted!");
 
         let creator = vec![
             Creator {
-                address: self.mint_authority.key().clone(),
+                address: self.mint_authority.key(),
                 verified: true,
                 share: 100,
             },
         ];
-        
+
         let metadata_account = CreateMetadataAccountV3Cpi::new(
-            spl_metadata_program, 
+            spl_metadata_program,
             CreateMetadataAccountV3CpiAccounts {
                 metadata,
                 mint,
@@ -119,27 +145,25 @@ impl<'info> CreateCollection<'info> {
                 update_authority: (authority, true),
                 system_program,
                 rent: None,
-            },
+            }, 
             CreateMetadataAccountV3InstructionArgs {
                 data: DataV2 {
-                    name ,
+                    name,
                     symbol,
                     uri,
                     seller_fee_basis_points: 0,
                     creators: Some(creator),
-                    collection: None,
-                    uses: None,
+                    collection: Some(Collection {
+                        verified: false,
+                        key: self.collection_mint.key(),
+                    }),
+                    uses: None
                 },
                 is_mutable: true,
-                collection_details: Some(
-                    CollectionDetails::V1 { 
-                        size: 0 
-                    }
-                )
+                collection_details: None,
             }
         );
         metadata_account.invoke_signed(signer_seeds)?;
-        msg!("Metadata Account created!");
 
         let master_edition_account = CreateMasterEditionV3Cpi::new(
             spl_metadata_program,
@@ -159,8 +183,8 @@ impl<'info> CreateCollection<'info> {
             }
         );
         master_edition_account.invoke_signed(signer_seeds)?;
-        msg!("Master Edition Account created");
-        
+
         Ok(())
+        
     }
 }

@@ -23,3 +23,4 @@ mpl-token-metadata = { version = "4.1.2"}
 solana-program = "2.0.2"
 toml_datetime = "0.6.6"
 winnow = "0.6.13"
+fixed = "1.27.0"

@@ -15,6 +15,8 @@ use anchor_spl::{
 };
 pub use anchor_lang::solana_program::sysvar::instructions::ID as INSTRUCTIONS_ID;
 
+use crate::constants::AUTHORITY_SEED;
+
 
 #[derive(Accounts)]
 pub struct VerifyCollectionMint<'info> {
@@ -23,7 +25,7 @@ pub struct VerifyCollectionMint<'info> {
     pub metadata: Account<'info, MetadataAccount>,
     pub mint: Account<'info, Mint>,
     #[account(
-        seeds = [b"authority"],
+        seeds = [AUTHORITY_SEED],
         bump,
     )]
     /// CHECK: This account is not initialized and is being used for signing purposes only
@@ -52,7 +54,7 @@ impl<'info> VerifyCollectionMint<'info> {
         let spl_metadata_program = &self.token_metadata_program.to_account_info();
 
         let seeds = &[
-            &b"authority"[..], 
+            &AUTHORITY_SEED[..], 
             &[bumps.mint_authority]
         ];
         let signer_seeds = &[&seeds[..]];

@@ -1,6 +1,9 @@
 use anchor_lang::prelude::*;
 
 pub mod contexts;
+mod constants;
+mod errors;
+mod state;
 
 pub use contexts::*;
 
@@ -42,10 +45,17 @@ pub mod tims_nft_mint_vault_swap {
         ctx.accounts.withdraw_nft(&ctx.bumps)
     }
 
-    // pub fn unlock_nft(ctx: Context<UnLockNft>) -> Result<()> {
-    //     ctx.accounts.unlock_nft()
-    // }
 
+   
+    pub fn swap_sol_for_nft(ctx: Context<SwapSolForNft>,
+        uri: String,
+        name: String,
+        symbol: String,
+        _decimals: u8,
+        quantity: u64
+    ) -> Result<()> {
+        ctx.accounts.swap_sol_for_nft(&ctx.bumps,uri, name, symbol, quantity)
+    }
     
 }
 

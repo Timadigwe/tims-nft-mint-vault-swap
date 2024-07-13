@@ -2,6 +2,8 @@ use anchor_lang::prelude::*;
 use anchor_spl::
     token::{ Mint, Token, TokenAccount, Transfer};
 
+use crate::{constants::{VAULT, VAULT_OWNER}, errors::GeneralError};
+
 #[derive(Accounts)]
 pub struct LockNft<'info> {
     #[account(mut)]
@@ -10,7 +12,7 @@ pub struct LockNft<'info> {
     #[account(
         init_if_needed,
         payer = user,
-        seeds = [b"vault_owner"],
+        seeds = [VAULT_OWNER],
         bump,
         space = 8 + 32 ,
     )]
@@ -19,7 +21,7 @@ pub struct LockNft<'info> {
     #[account(
         init_if_needed,
         payer = user,
-        seeds = [b"vault"],
+        seeds = [VAULT],
         token::mint = mint_of_nft_being_sent,
         token::authority = vault_owner,
         bump
@@ -71,14 +73,14 @@ pub struct WithdrawNFT<'info> {
     #[account(
         mut,
         close = rent_receiver,
-        seeds = [b"vault_owner"],
+        seeds = [VAULT_OWNER],
         bump,
     )]
     pub vault_owner: Account<'info, Vault>,
 
     #[account(
         mut,
-        seeds = [b"vault"],
+        seeds = [VAULT],
         bump
     )]
     vault_account: Account<'info, TokenAccount>,
@@ -105,10 +107,10 @@ impl<'info> WithdrawNFT<'info> {
         require_eq!(
             user,
             authority,
-            ErrorCode::InvalidOwner
+            GeneralError::InvalidOwner
         );
        let bump = bumps.vault_owner;
-       let seeds = &[b"vault_owner".as_ref(), &[bump]];
+       let seeds = &[VAULT_OWNER.as_ref(), &[bump]];
         let signer_seeds = &[&seeds[..]];
 
          //perform the nft transfer 
@@ -130,42 +132,3 @@ impl<'info> WithdrawNFT<'info> {
 }
 
 
-// #[derive(Accounts)]
-// pub struct UnLockNft<'info> {
-//     #[account(mut)]
-//     pub user: Signer<'info>,
-//     #[account(
-//         mut,
-//         close = receiver,
-//         seeds = [b"vault_owner"],
-//         bump,
-//     )]
-//     pub vault_owner: Account<'info, Vault>,    
-//     #[account(
-//         mut,
-//         //close = user,
-//         seeds = [b"vault"],
-//         bump
-//     )]
-//     vault_account: Account<'info, TokenAccount>,
-//     /// CHECK:  lets just see if it works
-//     #[account(mut)]
-//     receiver: AccountInfo<'info>,
-//     pub rent: Sysvar<'info, Rent>,
-//     pub system_program: Program<'info, System>,
-//     pub token_program: Program<'info, Token>,
-// }
-
-
-// impl<'info> UnLockNft<'info> {
-//     pub fn unlock_nft(&mut self)  -> Result<()> { 
-//         Ok(())
-//     }
-//  }
-
-
-#[error_code]
-pub enum ErrorCode {
-    #[msg("The address is not the owner of the vault")]
-    InvalidOwner,
-}

@@ -26,7 +26,8 @@ use anchor_spl::metadata::mpl_token_metadata::{
     }
 };
 
-use crate::CreateNFTParams;
+use crate::{constants::AUTHORITY_SEED, state::CreateNFTParams};
+
 
 #[derive(Accounts)]
 #[instruction(params: CreateNFTParams)]
@@ -55,7 +56,7 @@ pub struct MintNFT<'info> {
     /// CHECK: This account will be initialized by the metaplex program
     pub master_edition: UncheckedAccount<'info>,
     #[account(
-        seeds = [b"authority"],
+        seeds = [AUTHORITY_SEED],
         bump,
     )]
     /// CHECK: This is account is not initialized and is being used for signing purposes only
@@ -86,7 +87,7 @@ impl<'info> MintNFT<'info> {
         let spl_metadata_program = &self.token_metadata_program.to_account_info();
 
         let seeds = &[
-            &b"authority"[..], 
+            &AUTHORITY_SEED[..], 
             &[bumps.mint_authority]
         ];
         let signer_seeds = &[&seeds[..]];
