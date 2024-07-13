@@ -24,19 +24,19 @@ impl anchor_lang::Id for Core {
 pub mod tims_nft_mint {
     use super::*;
 
-    /// Init protocol config and accounts
-    ///
-    pub fn init(ctx: Context<Init>) -> Result<()> {
-        Init::init(ctx)
-    }
+    // /// Init protocol config and accounts
+    // ///
+    // pub fn init(ctx: Context<Init>) -> Result<()> {
+    //     Init::init(ctx)
+    // }
 
-     /// Create a MPL Core collection
+     /// Create a MPL Core collection 
     ///
     pub fn create_collection(
-        ctx: Context<CreateCollection>,
+        ctx: Context<CreateCollectionContext>,
         params: CreateCollectionParams,
     ) -> Result<()> {
-        CreateCollection::create_collection(ctx, params)
+        CreateCollectionContext::create_collection(ctx, params)
     }
 
      /// Create a MPL Core asset from a collection

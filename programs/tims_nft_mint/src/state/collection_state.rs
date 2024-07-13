@@ -37,3 +37,16 @@ impl CollectionData {
         }
     }
 }
+
+
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct CreateCollectionParams {
+    ///  name of our collection
+    pub name: String,
+
+    ///  off-chain metadata uri
+    pub uri: String,
+
+    /// no. of items collection should hold
+    pub items: u32,
+}

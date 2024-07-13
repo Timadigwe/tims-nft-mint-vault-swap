@@ -2529,6 +2529,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "tims_swap"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "tims_nft_mint",
+]
+
+[[package]]
 name = "tiny-bip39"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

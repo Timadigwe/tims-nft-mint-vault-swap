@@ -2,10 +2,12 @@ import { createGenericFile, TransactionBuilderSendAndConfirmOptions, Umi } from 
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import dotenv from "dotenv";
 import fs, { readFileSync } from "fs";
-import { homedir } from "os";
 import path from "path";
 
 dotenv.config();
+
+export const collection = Keypair.generate();
+export const asset = Keypair.generate();
 
 // ------------------------------------------- seeds
 
@@ -17,8 +19,6 @@ export const SEED_COLLECTION_DATA = "collection";
 
 export const SEED_PROTOCOL = "protocol";
 
-// ------------------------------------ config
-export const NFT_STORAGE_TOKEN = process.env.NFT_STORAGE_TOKEN;
 
 // ---------------------------------------- programs
 
@@ -27,7 +27,7 @@ export const MINT_VAULT_ID = new PublicKey(
 );
 
 export const SWAP = new PublicKey(
-	"xnrMV3UCFqDefZW3oEY4QGVX8fFmopJGETwWDSfCiUd"
+	"7svwjVA2mXBsCDL6SSdYonvswsEnx4y3uZGVtjqyeQzq"
 );
 
 export const CORE_PROGRAM_ID = new PublicKey(
@@ -69,16 +69,6 @@ export function uint8FileData(pathName: string): Uint8Array {
 	return data;
 }
 
-const USER_KEYPAIR_PATH = homedir() + "/.config/solana/id.json";
-export const userKeypair = Keypair.fromSecretKey(
-	Buffer.from(JSON.parse(readFileSync(USER_KEYPAIR_PATH, "utf-8")))
-);
-
-
-const BUYER_KEYPAIR_PATH = homedir() + "/.config/solana/id-new.json";
-export const buyerKeypair = Keypair.fromSecretKey(
-	Buffer.from(JSON.parse(readFileSync(USER_KEYPAIR_PATH, "utf-8")))
-);
 
 export async function uploadAssetFiles(
 	umi: Umi,
