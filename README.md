@@ -53,66 +53,66 @@ anchor build
 
 **Accounts:**
 
-[writable, signer] payer
-[writable] assetManager
-[writable] protocol
-[writable] treasury
-[] core program
-[] system program
+1. [writable, signer] payer
+2. [writable] assetManager
+3. [writable] protocol
+4. [writable] treasury
+5. [] core program
+6. [] system program
 
 
 -   `create_collection` - creates a collection for the assets that will be minted
 
 **Accounts:**
 
-[writable, signer] payer
-[writable, signer] collection
-[writable] collection_data
-[] core program
-[] system program
+1. [writable, signer] payer
+2. [writable, signer] collection
+3. [writable] collection_data
+4. [] core program
+5. [] system program
 
 **Parameters**:
-params: [CreateCollectionParams]
+-params: [CreateCollectionParams]
 
 -   `mint_asset` - mints asset from previously created collection
 
 **Accounts:**
 
-[writable, signer] payer
-[writable, signer] asset
-[writable] collection
-[writable] collection_data
-[] core program
-[] system program
+1. [writable, signer] payer
+2. [writable, signer] asset
+3. [writable] collection
+4. [writable] collection_data
+5. [] core program
+6. [] system program
 
 **Parameters**:
-params: [MintFromColParams]
+-params: [MintFromColParams]
 
 -   `lock_in_vault` - locks an asset in the program vault. Protocol takes a flat fee of 1 SOl for locking the asset
 
 **Accounts:**
 
-[writable, signer] payer
-[writable] asset
-[writable] collection
-[writable] asset manager
-[writable] protocol
-[] core program
-[] system program
+1. [writable, signer] payer
+2. [writable] asset
+3. [writable] collection
+4. [writable] asset manager
+5. [writable] protocol
+6. [] core program
+7. [] system program
 
 -   `purchase` - Unlock and acquire an asset from a program vault for a one-time fee of 2 SOL.
 
 **Accounts:**
 
-[writable, signer] payer
-[writable] buyer
-[writable] previous_owner
-[writable] asset
-[writable] collection
-[] asset manager
-[] protocol
-[] core program
-[] system program
+1. [writable, signer] payer
+2. [writable] buyer
+3. [writable] previous_owner
+4. [writable] asset
+5. [writable] collection
+6. [] asset manager
+7. [] protocol
+8. [] core program
+9. [] system program
 
 
 2. Tims_Swap program
@@ -121,13 +121,18 @@ params: [MintFromColParams]
 
 **Accounts:**
 
-[writable, signer] payer
-[writable] buyer
-[writable] previous_owner
-[writable] asset
-[writable] collection
-[] asset manager
-[] protocol
-[] core program
-[] mint_vault_program
-[] system program
+1. [writable, signer] payer
+2. [writable] buyer
+3. [writable] previous_owner
+4. [writable] asset
+5. [writable] collection
+6. [] asset manager
+7. [] protocol
+8. [] core program
+9. [] mint_vault_program
+10.[] system program
+
+
+## Links
+
+- [YouTube Tutorial](https://youtu.be/wl4GtInUaZ8)
